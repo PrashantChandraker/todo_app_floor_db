@@ -1,7 +1,10 @@
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 
+import 'package:vibration/vibration.dart';
+import 'package:avatar_glow/avatar_glow.dart';
 import 'package:intl/intl.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 import 'package:todo_app_floor_db/database/database.dart';
 import 'package:todo_app_floor_db/database/notes_entity.dart';
 
@@ -24,6 +27,12 @@ class _AddUpdateNotesState extends State<AddUpdateNotes> {
   TextEditingController description_controller = TextEditingController();
   TextEditingController date_controller = TextEditingController();
   var key = GlobalKey<FormState>();
+
+  //for voice recording
+  SpeechToText speechToText = SpeechToText();
+  var description = "Type your Description";
+  var isListening = false;
+  String tempRecognizedText = "";
 
   @override
   void initState() {
@@ -56,9 +65,8 @@ class _AddUpdateNotesState extends State<AddUpdateNotes> {
           style: TextStyle(color: Colors.white70),
         ),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          scrollDirection: Axis.vertical,
+      body: SingleChildScrollView(
+        child: SafeArea(
           child: Form(
             key: key,
             child: Padding(
@@ -106,7 +114,7 @@ class _AddUpdateNotesState extends State<AddUpdateNotes> {
                       filled: true,
                       fillColor: Colors.white70,
                       contentPadding: const EdgeInsets.all(10),
-                      hintText: "Type your Description",
+                      hintText: description,
                       // label: Text("Description"),
 
                       border: const OutlineInputBorder(
@@ -122,24 +130,24 @@ class _AddUpdateNotesState extends State<AddUpdateNotes> {
                   Container(
                     color: Colors.white70,
                     child: TextFormField(
-                          onTap: () {
-                            showDatePicker(
-                                    context: context,
-                                    firstDate: DateTime.now(),
-                                    lastDate: DateTime(2040),
-                                    initialDate: DateTime.now(),
-                                    cancelText: "cancel",
-                                    confirmText: "Ok",
-                                    helpText: "Please Select a Date")
-                                .then(
-                              (value) {
-                                if (value != null) {
-                                  date_controller.text =
-                                      DateFormat("yyyy/MM/dd").format(value);
-                                }
-                              },
-                            );
+                      onTap: () {
+                        showDatePicker(
+                                context: context,
+                                firstDate: DateTime.now(),
+                                lastDate: DateTime(2040),
+                                initialDate: DateTime.now(),
+                                cancelText: "cancel",
+                                confirmText: "Ok",
+                                helpText: "Please Select a Date")
+                            .then(
+                          (value) {
+                            if (value != null) {
+                              date_controller.text =
+                                  DateFormat("yyyy/MM/dd").format(value);
+                            }
                           },
+                        );
+                      },
                       maxLines: 1,
                       controller: date_controller,
                       validator: (v) {
@@ -182,7 +190,79 @@ class _AddUpdateNotesState extends State<AddUpdateNotes> {
                     ),
                   ),
                   const SizedBox(
-                    height: 50,
+                    height: 30,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Column(
+                          children: [
+                            AvatarGlow(
+                              glowRadiusFactor: .5,
+                              duration: const Duration(milliseconds: 1500),
+                              glowColor: Color.fromARGB(255, 0, 64, 92),
+                              repeat: true,
+                              // glowShape: BoxShape.circle,
+                              glowCount: 5,
+                              
+                              // glowBorderRadius: BorderRadius.circular(5),
+                              animate: isListening,
+                              child: Padding(
+                                padding: const EdgeInsets.all(15.0),
+                                child: GestureDetector(
+                                  
+                                  onTapDown: (details) async {
+                                    var preText = description_controller.text;
+                                    _vibrate();
+                                    if (!isListening) {
+                                      var available =
+                                          await speechToText.initialize();
+                                      if (available) {
+                                        setState(() {
+                                          isListening = true;
+                                          //  tempRecognizedText = "";  // Reset the temporary text
+                                          speechToText.listen(onResult: ((result) {
+                                            setState(() {
+                                              
+                                              
+                                              description_controller.text = preText + " " +
+                                                  result.recognizedWords;
+                                            });
+                                          }));
+                                        });
+                                      }
+                                    }
+                                  },
+                                  onTapUp: (details) {
+                                    setState(() {
+                                      isListening = false;
+                                      // description_controller.text += " " + tempRecognizedText;
+                                    });
+                                    speechToText.stop();
+                                  },
+                                  child: CircleAvatar(
+                                    backgroundColor: Color.fromARGB(255, 0, 64, 92),
+                                    radius: 30,
+                                    child: Icon(
+                                      isListening ? Icons.mic : Icons.mic_none,
+                                      color: Colors.white,
+                                      size: 40,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 10,),
+                            Text('Touch and hold to speak', style: TextStyle(color: isListening ? Colors.transparent: Colors.black , fontSize: 15),)
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 200,
                   ),
 
                   //////////////    SAVE     /////////////
@@ -217,30 +297,56 @@ class _AddUpdateNotesState extends State<AddUpdateNotes> {
 
                       widget.noteEntity == null
                           ? const SizedBox.shrink()
-                          : InkWell(
-                              onTap: () {
-                                delete();
-                              },
-                              child: Container(
-                                height: 50,
-                                width: MediaQuery.of(context).size.width * .2,
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 15),
-                                decoration: BoxDecoration(
-                                    border: Border.all(
-                                        color: Colors.black, width: 2),
-                                    borderRadius: BorderRadius.circular(15),
-                                    color: Colors.redAccent),
-                                child: const Center(
-                                  child: Text(
-                                    'Delete',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
+                          : GestureDetector(
+  onTap: () {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Row(
+            children: const [
+              Text('Are you sure to delete?'),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Delete', style: TextStyle(color: Colors.red),),
+              onPressed: () {
+                // Call your delete function here
+                delete();
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  },
+  child: Container(
+    height: 50,
+    width: MediaQuery.of(context).size.width * .2,
+    margin: const EdgeInsets.symmetric(horizontal: 15),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.black, width: 2),
+      borderRadius: BorderRadius.circular(15),
+      color: Colors.redAccent,
+    ),
+    child: const Center(
+      child: Text(
+        'Delete',
+        style: TextStyle(
+          color: Colors.white,
+        ),
+      ),
+    ),
+  ),
+),
                     ],
                   ),
                 ],
@@ -324,5 +430,11 @@ class _AddUpdateNotesState extends State<AddUpdateNotes> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(snackbar);
+  }
+
+  void _vibrate() async {
+    if (await Vibration.hasVibrator() ?? false) {
+      Vibration.vibrate(duration: 100);
+    }
   }
 }

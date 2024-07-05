@@ -35,37 +35,37 @@ class _Home_screenState extends State<Home_screen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-       actions: [
-    PopupMenuButton<String>(
-      icon: Icon(Icons.more_vert),
-      onSelected: (value) {
-        // Add your action handling code here
-        if (value == 'Option 1') {
-          // Handle Option 1
-        } else if (value == 'Option 2') {
-          // Handle Option 2
-        } else if (value == 'Option 3') {
-          // Handle Option 3
-        }
-      },
-      itemBuilder: (BuildContext context) {
-        return [
-          PopupMenuItem<String>(
-            value: 'Option 1',
-            child: Text('Option 1'),
-          ),
-          PopupMenuItem<String>(
-            value: 'Option 2',
-            child: Text('Option 2'),
-          ),
-          PopupMenuItem<String>(
-            value: 'Option 3',
-            child: Text('Option 3'),
-          ),
-        ];
-      },
-    ),
-  ],
+  //      actions: [
+  //   PopupMenuButton<String>(
+  //     icon: Icon(Icons.more_vert),
+  //     onSelected: (value) {
+  //       // Add your action handling code here
+  //       if (value == 'Option 1') {
+  //         // Handle Option 1
+  //       } else if (value == 'Option 2') {
+  //         // Handle Option 2
+  //       } else if (value == 'Option 3') {
+  //         // Handle Option 3
+  //       }
+  //     },
+  //     itemBuilder: (BuildContext context) {
+  //       return [
+  //         PopupMenuItem<String>(
+  //           value: 'Option 1',
+  //           child: Text('Option 1'),
+  //         ),
+  //         PopupMenuItem<String>(
+  //           value: 'Option 2',
+  //           child: Text('Option 2'),
+  //         ),
+  //         PopupMenuItem<String>(
+  //           value: 'Option 3',
+  //           child: Text('Option 3'),
+  //         ),
+  //       ];
+  //     },
+  //   ),
+  // ],
         leading:  Transform.scale(
     scale: 0.8,  // Adjust the scale factor as needed
     child: Image.asset('assets/app_icon.png'),
@@ -74,7 +74,7 @@ class _Home_screenState extends State<Home_screen> {
         backgroundColor: Color.fromARGB(255, 0, 64, 92),
         elevation: 10,
         title: const Text(
-                  "Notes",
+                  "PC Notes",
                   style: TextStyle(color: Colors.white70),
                 ),
       ),
